@@ -1,0 +1,44 @@
+# ---- 密钥与本机私有配置 ----
+.env
+.env.*
+!.env.example
+local_api_keys.json
+.filemind/
+
+# ---- Python 运行产物 ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- 虚拟环境 ----
+.venv/
+venv/
+
+# ---- 测试与类型检查缓存 ----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ---- 打包产物 ----
+build/
+dist/
+*.egg-info/
+FileMind.zip
+
+# ---- 开发工具与 IDE ----
+.idea/
+.vscode/
+
+# ---- 本工具链产物（UI 审查截图等）----
+.artifacts/
+
+# ---- 操作系统 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- 日志 ----
+*.log

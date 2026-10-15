@@ -1,0 +1,4 @@
+interface:
+  display_name: "FileMind Desktop UI"
+  short_description: "Refine FileMind Qt Widgets UI with isolated visual checks"
+  default_prompt: "Improve FileMind UI while preserving validated plans, local lock, and privacy boundaries."
