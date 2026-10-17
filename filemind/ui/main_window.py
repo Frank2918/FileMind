@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
     QListWidgetItem,
     QMainWindow,
     QMenu,
@@ -59,7 +58,7 @@ from filemind.ui.pages.conversion_page import ConversionPage
 from filemind.ui.dialogs.plan_preview import PlanPreviewDialog
 from filemind.ui.styles.icons import svg_icon
 from filemind.ui.styles.theme import COLORS, apply_theme
-from filemind.ui.widgets.conversation_row import ROW_HEIGHT, ConversationRow
+from filemind.ui.widgets.conversation_row import ROW_HEIGHT, ConversationList, ConversationRow
 from filemind.ui.widgets.privacy_dialog import OrbitPrivacyDialog
 from filemind.core.organization_presets import classify_with_preset
 from filemind.core.executor import ExecutionResult, execute_plan, undo_record
@@ -1026,7 +1025,7 @@ class MainWindow(QMainWindow):
         self.conversation_search.textChanged.connect(self._filter_conversations)
         self.conversation_search.hide()
         recent_layout.addWidget(self.conversation_search)
-        self.conversation_list = QListWidget()
+        self.conversation_list = ConversationList()
         self.conversation_list.setObjectName("OrbitRecentList")
         self.conversation_list.setFrameShape(QFrame.Shape.NoFrame)
         self.conversation_list.setSpacing(1)

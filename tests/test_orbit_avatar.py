@@ -74,8 +74,8 @@ def test_visible_avatar_moves_and_hidden_avatar_stops() -> None:
     avatar.show()
     first = avatar.pixmap().toImage()
     assert avatar.is_animating
-    QTest.qWait(100)
-    assert avatar.pixmap().toImage() != first
+    # Native timers can start after the first macOS offscreen exposure events.
+    wait_until(lambda: avatar.pixmap().toImage() != first, timeout=1.5)
     avatar.hide()
     assert not avatar.is_animating
     avatar.show()

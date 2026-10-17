@@ -30,7 +30,7 @@ spec 中的 `Analysis` / `EXE` / `COLLECT` 及资源路径遵循 [PyInstaller �
 
 ## 1. 校验配置与准备环境
 
-需要 Windows x64、Python 3.13 x64、PowerShell 和 **Inno Setup 6.5 或更新版本**，使用其自带的 `Languages\ChineseSimplified.isl`。Inno Setup 可以继续装在你的 `D:\devtools` 目录。
+需要 Windows x64、Python 3.13 x64、PowerShell 和 **Inno Setup 6.5 或更新版本**。简体中文语言文件随项目保存在 `packaging/installer/languages/ChineseSimplified.isl`，使用固定上游版本并保留来源与许可证；编译机无需额外安装语言包。Inno Setup 可以继续装在你的 `D:\devtools` 目录。
 
 在 PowerShell 中执行：
 

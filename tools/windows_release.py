@@ -67,7 +67,9 @@ def validate_config(root: Path) -> dict[str, object]:
                 "scripts/build-windows.ps1", "filemind/ui/assets/FileMind_AppIcon.ico",
                 "tools/export_installer_art.py", "packaging/installer/wizard-sidebar.bmp",
                 "packaging/installer/wizard-small.bmp", "packaging/installer/LICENSE.zh-CN.txt",
-                "packaging/installer/wordmark.svg")
+                "packaging/installer/wordmark.svg",
+                "packaging/installer/languages/ChineseSimplified.isl",
+                "packaging/installer/languages/INNO-LICENSE.txt")
     for relative in required:
         if not (root / relative).is_file():
             raise ValueError(f"Missing release input: {relative}.")

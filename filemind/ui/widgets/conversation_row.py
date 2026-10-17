@@ -6,10 +6,10 @@ from datetime import datetime
 
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtGui import (
-    QColor, QFontMetrics, QHideEvent, QMouseEvent, QResizeEvent, QStandardItem, QStandardItemModel,
+    QColor, QFontMetrics, QHideEvent, QKeyEvent, QMouseEvent, QResizeEvent, QStandardItem, QStandardItemModel,
 )
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QSizePolicy, QToolButton, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QListWidget, QSizePolicy, QToolButton, QVBoxLayout, QWidget,
 )
 
 from filemind.ui.styles.icons import svg_icon
@@ -18,6 +18,22 @@ from filemind.ui.widgets.combo_box import ComboPopup
 
 
 ROW_HEIGHT = 52
+
+
+class ConversationList(QListWidget):
+    """Give conversation activation the same Return and Enter keys on every OS."""
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Handle confirmation once before platform-specific item-view bindings."""
+        if (event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+                and event.modifiers() in (Qt.KeyboardModifier.NoModifier,
+                                          Qt.KeyboardModifier.KeypadModifier)):
+            item = self.currentItem()
+            if item is not None and not item.isHidden():
+                self.itemActivated.emit(item)
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
 def conversation_activity(updated_at: str, message_count: int, now: datetime | None = None) -> str:

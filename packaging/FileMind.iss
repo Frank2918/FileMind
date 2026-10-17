@@ -1,6 +1,6 @@
 ; Compile from PowerShell with ISCC.exe /DAppVersion=0.1.0 packaging\FileMind.iss.
 ; Paths remain relative to this script; no teammate workstation paths are embedded.
-; Inno Setup 6.5+ supplies the Simplified Chinese language used below.
+; The pinned Simplified Chinese translation is shipped with this project.
 #define ProjectRoot AddBackslash(SourcePath) + ".."
 #ifndef AppVersion
   #if FileExists(ProjectRoot + "\build\release\metadata.iss")
@@ -46,7 +46,7 @@ CloseApplications=yes
 RestartApplications=no
 
 [Languages]
-Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "chinesesimp"; MessagesFile: "{#ProjectRoot}\packaging\installer\languages\ChineseSimplified.isl"
 
 [LangOptions]
 DialogFontName=Microsoft YaHei UI

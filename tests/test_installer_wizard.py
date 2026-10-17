@@ -23,7 +23,13 @@ def test_six_native_pages_and_bundled_chinese_language_are_enabled() -> None:
     for setting in ("DisableWelcomePage=no", "DisableDirPage=no", "DisableReadyPage=yes",
                     "DisableFinishedPage=no", "WizardStyle=modern", "ShowLanguageDialog=no"):
         assert setting in script
-    assert 'MessagesFile: "compiler:Languages\\ChineseSimplified.isl"' in script
+    assert ('MessagesFile: "{#ProjectRoot}\\packaging\\installer\\languages\\ChineseSimplified.isl"'
+            in script)
+    language = (ROOT / "packaging/installer/languages/ChineseSimplified.isl").read_text("utf-8-sig")
+    assert "LanguageName=简体中文" in language
+    assert "LanguageID=$0804" in language
+    assert "[Messages]" in language
+    assert (ROOT / "packaging/installer/languages/INNO-LICENSE.txt").is_file()
     assert "DialogFontName=Microsoft YaHei UI" in script
     assert "WizardImageFile={#ProjectRoot}\\packaging\\installer\\wizard-sidebar.bmp" in script
     assert "WizardSmallImageFile={#ProjectRoot}\\packaging\\installer\\wizard-small.bmp" in script

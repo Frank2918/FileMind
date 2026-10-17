@@ -16,7 +16,7 @@ from filemind.models import FileInfo
 from filemind.storage.chat_history import MAX_CONVERSATIONS, ChatHistoryStore
 from filemind.ui.styles.theme import apply_theme
 from filemind.ui.widgets.combo_box import ComboItemDelegate, ComboPopup, StyledComboBox
-from filemind.ui.widgets.conversation_row import ConversationRow, conversation_activity
+from filemind.ui.widgets.conversation_row import ConversationList, ConversationRow, conversation_activity
 from tools.review_ui import build_review
 
 
@@ -137,6 +137,28 @@ def test_search_filters_titles_and_restores_sessions_without_network(tmp_path: P
     assert window.conversation_count.text() == "20"
     assert window.conversation_list.isVisible()
     window.close()
+
+
+@pytest.mark.parametrize("key,modifiers", [
+    (Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier),
+    (Qt.Key.Key_Enter, Qt.KeyboardModifier.KeypadModifier),
+])
+def test_conversation_confirmation_activates_once(
+    key: Qt.Key, modifiers: Qt.KeyboardModifier,
+) -> None:
+    view = ConversationList()
+    view.addItems(["First conversation", "Second conversation"])
+    view.setCurrentRow(0)
+    activated = QSignalSpy(view.itemActivated)
+    QTest.keyClick(view, Qt.Key.Key_Down)
+    assert view.currentRow() == 1 and activated.count() == 0
+    QTest.keyClick(view, key, modifiers)
+    assert activated.count() == 1
+    assert activated.at(0)[0] is view.currentItem()
+    view.currentItem().setHidden(True)
+    QTest.keyClick(view, key, modifiers)
+    assert activated.count() == 1
+    view.close()
 
 
 def test_action_popup_reuses_model_surface_and_escape_does_not_delete() -> None:

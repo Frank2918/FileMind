@@ -25,7 +25,9 @@ def create_project(root: Path, version: str = "1.2.3") -> Path:
                  "scripts/build-windows.ps1", "filemind/ui/assets/FileMind_AppIcon.ico",
                  "tools/export_installer_art.py", "packaging/installer/wizard-sidebar.bmp",
                  "packaging/installer/wizard-small.bmp", "packaging/installer/LICENSE.zh-CN.txt",
-                 "packaging/installer/wordmark.svg"):
+                 "packaging/installer/wordmark.svg",
+                 "packaging/installer/languages/ChineseSimplified.isl",
+                 "packaging/installer/languages/INNO-LICENSE.txt"):
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("", "utf-8")
@@ -88,6 +90,14 @@ def test_validate_rejects_conflicting_build_lock(tmp_path: Path) -> None:
     root = create_project(tmp_path)
     (root / "packaging/requirements-build.lock").write_text("example==2.0\n")
     with pytest.raises(ValueError, match="Conflicting"):
+        release.validate_config(root)
+
+
+@pytest.mark.parametrize("filename", ["ChineseSimplified.isl", "INNO-LICENSE.txt"])
+def test_validate_requires_bundled_installer_language(tmp_path: Path, filename: str) -> None:
+    root = create_project(tmp_path)
+    (root / "packaging/installer/languages" / filename).unlink()
+    with pytest.raises(ValueError, match="Missing release input"):
         release.validate_config(root)
 
 
