@@ -38,8 +38,12 @@ class ExecutorTests(unittest.TestCase):
             history = OperationHistory(root)
             plan = build_plan(root, scan_files(root), classify_file)
 
-            with self.assertRaises(FileExistsError):
-                execute_plan(plan, history, confirmed=True)
+            result = execute_plan(plan, history, confirmed=True)
+
+            self.assertEqual((result.succeeded, result.skipped, result.failed), (0, 1, 0))
+            record = history.list_records()[0]
+            self.assertEqual(record.operations[0]["status"], "skipped")
+            self.assertIn("同名", str(record.operations[0]["skip_reason"]))
 
             self.assertEqual(source.read_text(encoding="utf-8"), "source")
             self.assertEqual(target.read_text(encoding="utf-8"), "keep")

@@ -6,8 +6,8 @@ from PySide6.QtCore import QModelIndex, QRect, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter
 from PySide6.QtWidgets import QHeaderView, QTreeWidget, QTreeWidgetItem, QWidget
 
-from filemind.models import OperationPlan
-from filemind.ui.styles.icons import file_type_icon, svg_icon
+from filemind.models import OperationPlan, PlannedOperation
+from filemind.ui.styles.icons import svg_icon
 from filemind.ui.styles.file_icons import associated_file_icon
 from filemind.ui.styles.theme import COLORS
 
@@ -53,7 +53,7 @@ class PlanTargetTree(QTreeWidget):
         root = self._folder(plan.root.name or str(plan.root), "", plan.root)
         self.addTopLevelItem(root)
         folders: dict[str, QTreeWidgetItem] = {"": root}
-        counts: dict[str, list[int]] = {"": [0, 0]}
+        counts: dict[str, list[int]] = {"": [0, 0, 0]}
         for operation in plan.operations:
             relative = operation.target.relative_to(plan.root)
             if ".." in relative.parts:
@@ -65,27 +65,37 @@ class PlanTargetTree(QTreeWidget):
                 if key not in folders:
                     folders[key] = self._folder(part, key, plan.root / key)
                     current.addChild(folders[key])
-                    counts[key] = [0, 0]
+                    counts[key] = [0, 0, 0]
                 current = folders[key]
                 ancestors.append(key)
-            node = QTreeWidgetItem([operation.new_name, "异常" if operation.warning else "待执行"])
-            node.setData(0, PATH_ROLE, relative.as_posix())
-            node.setData(0, KIND_ROLE, "file")
-            node.setIcon(0, associated_file_icon(operation.target.suffix.lower()))
-            node.setToolTip(0, str(operation.target))
-            node.setToolTip(1, operation.warning or "本地安全校验通过；确认后执行")
-            if operation.warning:
-                node.setIcon(0, svg_icon("warning", COLORS["warning"]))
-                node.setForeground(1, QColor(COLORS["warning"]))
-                if "同名" in operation.warning or "冲突" in operation.warning:
-                    node.setText(1, "冲突")
-            current.addChild(node)
+            current.addChild(self._file_node(operation, relative))
             for key in ancestors:
-                counts[key][0] += 1
-                counts[key][1] += bool(operation.warning)
+                counts[key][0] += not operation.excluded
+                counts[key][1] += bool(operation.warning) and not operation.excluded
+                counts[key][2] += operation.excluded
         self._set_folder_counts(folders, counts)
         self.expandToDepth(1)
         self.setCurrentItem(root)
+
+    @staticmethod
+    def _file_node(operation: PlannedOperation, relative: Path) -> QTreeWidgetItem:
+        node = QTreeWidgetItem([operation.new_name, "待执行"])
+        node.setData(0, PATH_ROLE, relative.as_posix())
+        node.setData(0, KIND_ROLE, "file")
+        node.setIcon(0, associated_file_icon(operation.target.suffix.lower()))
+        node.setToolTip(0, str(operation.target))
+        node.setToolTip(1, operation.warning or "本地安全校验通过；确认后执行")
+        if operation.excluded:
+            node.setText(1, "已排除")
+            node.setToolTip(1, "这一行已排除，本次不会移动该文件")
+            for column in (0, 1):
+                node.setForeground(column, QColor(COLORS["muted"]))
+        elif operation.warning:
+            conflict = "同名" in operation.warning or "冲突" in operation.warning
+            node.setText(1, "冲突" if conflict else "异常")
+            node.setIcon(0, svg_icon("warning", COLORS["warning"]))
+            node.setForeground(1, QColor(COLORS["warning"]))
+        return node
 
     @staticmethod
     def _folder(name: str, relative: str, absolute: Path) -> QTreeWidgetItem:
@@ -102,8 +112,11 @@ class PlanTargetTree(QTreeWidget):
     @staticmethod
     def _set_folder_counts(folders: dict[str, QTreeWidgetItem], counts: dict[str, list[int]]) -> None:
         for key, node in folders.items():
-            total, warnings = counts[key]
-            node.setText(1, f"{warnings} 项异常" if warnings else f"{total} 个文件")
-            node.setToolTip(1, f"{total} 个文件；{warnings} 项异常；尚未执行")
+            total, warnings, excluded = counts[key]
+            text = f"{warnings} 项异常" if warnings else f"{total} 个文件"
+            if excluded and not warnings:
+                text = f"{total} / {excluded} 排除"
+            node.setText(1, text)
+            node.setToolTip(1, f"{total} 个文件；{warnings} 项异常；{excluded} 项已排除；尚未执行")
             if warnings:
                 node.setForeground(1, QColor(COLORS["warning"]))

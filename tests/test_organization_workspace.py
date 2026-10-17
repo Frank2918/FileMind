@@ -5,7 +5,7 @@ from pathlib import Path
 from threading import Event
 from unittest.mock import patch
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEventLoop, QTimer, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
@@ -16,9 +16,19 @@ from tools.review_ui import build_review
 
 
 def wait_for_task(window) -> None:
-    deadline = time.monotonic() + 5
-    while window._active_worker is not None and time.monotonic() < deadline:
-        QTest.qWait(10)
+    # A real event loop lets Python workers and queued completion slots progress.
+    loop = QEventLoop()
+    poll = QTimer()
+    poll.setInterval(20)
+    poll.timeout.connect(lambda: loop.quit() if window._active_worker is None else None)
+    timeout = QTimer()
+    timeout.setSingleShot(True)
+    timeout.timeout.connect(loop.quit)
+    poll.start()
+    timeout.start(5000)
+    loop.exec()
+    poll.stop()
+    timeout.stop()
     assert window._active_worker is None
     QApplication.processEvents()
 
@@ -78,14 +88,17 @@ def test_enter_submits_real_ai_service_path_and_shift_enter_only_adds_line(tmp_p
     window.close()
 
 
-def test_local_month_preset_is_real_and_rule_changes_invalidate_execution(tmp_path: Path) -> None:
+def test_local_day_preset_is_real_and_rule_changes_invalidate_execution(tmp_path: Path) -> None:
     window, _ = build_review(tmp_path, "organize")
     page = window.organize_page
     page.preset_combo.setCurrentIndex(1)
     page.rule_send_button.click()
     wait_for_task(window)
     assert all(item.classification.source == "规则" for item in page.plan.operations)
-    assert all(len(item.classification.category) == 7 for item in page.plan.operations)
+    from datetime import datetime
+    assert page.preset_combo.currentData() == "modified_day"
+    assert all(item.classification.category == datetime.fromtimestamp(
+        item.modified_ns / 1_000_000_000).strftime("%Y-%m-%d") for item in page.plan.operations)
     page.rule_input.setPlainText("保留这段自定义文本")
     assert page.plan is None
     assert not page.execute_button.isEnabled()
