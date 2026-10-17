@@ -1,191 +1,375 @@
-# FileMind 文件整理助手
+<p align="center">
+  <img src="filemind/ui/assets/FileMind_AppIcon.png" width="88" alt="FileMind 应用图标">
+</p>
 
-## Windows 发布打包
+# FileMind
 
-使用 **PyInstaller 文件夹版（onedir）+ Inno Setup 6.5+**。在克隆后的仓库根目录使用 PowerShell 执行：
+**为 Windows 用户提供可预览、可确认、可撤销的文件整理流程。**
 
-```powershell
-.\scripts\build-windows.ps1 -ValidateOnly
-.\scripts\build-windows.ps1 -Stage Prepare
-.\scripts\build-windows.ps1 -Stage Bundle
-```
+FileMind 是使用 Python 与 PySide6 构建的桌面应用。你可以用本地规则分类文件，也可以让配置好的 AI 服务提供分类和命名建议，在核对预览后执行整理。应用还提供 Orbit AI 助手和本地格式转换工具。
 
-随后在 Inno Setup Compiler 打开 `packaging\FileMind.iss`，点击 Compile。编译成功后整理发布文件：
+**[下载 Windows 安装包](https://github.com/Frank2918/FileMind/releases)** · [快速开始](#快速开始) · [从源码运行](#从源码运行) · [English](#english)
 
-```powershell
-.\.venv-build\Scripts\python.exe tools\windows_release.py artifacts
-```
+Windows 10 / 11 · x64 安装包 · Python 3.13+ · PySide6 / Qt Widgets · [MIT License](LICENSE)
 
-也可以执行 `.\scripts\build-windows.ps1 -Stage Installer` 完成命令行编译；编译器不在常见目录时，使用 `-IsccPath` 指定实际路径。最终文件位于 `dist/release/<版本>/`，安装包和便携 ZIP 通过 GitHub Releases 分发。
+## 目录
 
-完整步骤、六步中文安装向导与 GitHub 草稿发布见 [正式 Windows 发布流程](docs/RELEASE_PIPELINE.md)。
+- [下载与安装](#下载与安装)
+- [软件截图](#软件截图)
+- [核心功能](#核心功能)
+- [快速开始](#快速开始)
+- [格式转换范围](#格式转换范围)
+- [从源码运行](#从源码运行)
+- [项目结构](#项目结构)
+- [安全与隐私](#安全与隐私)
+- [当前限制与路线图](#当前限制与路线图)
+- [常见问题](#常见问题)
+- [开发与贡献](#开发与贡献)
+- [许可证](#许可证)
+- [English](#english)
 
-FileMind 是一个 Python + PySide6 Windows 桌面文件整理工具。它可用本地规则分类，也可调用配置好的 OpenAI Chat Completions 兼容服务生成分类、相对目标子目录和可选改名建议。所有建议都要经过本地安全校验并由用户确认后，才会交给本地执行器。
+## 下载与安装
 
-## 当前功能
+普通用户直接安装 Windows 程序即可，**无需另行安装 Python**。
 
-- 只扫描用户明确选择的目录第一层普通文件，不递归；默认扫描和分类不读取正文。另行启用内容识别并逐次确认后才读取有限片段或图片缩略图。
-- 本地规则支持按文件类型或修改年月日分类（`YYYY-MM-DD`），可离线使用；课程/项目语义预设需要在线 AI，不会把本地规则结果显示成 AI 结果。
-- 主工作区先显示导入文件清单，采用 Windows 关联图标与统一备用类型图标；规则区和文件区之间可上下拖动并记住高度。选择分类方式、输入规则后，点击发送或按 Enter 生成建议，Shift+Enter 换行、Tab 移到发送按钮。目标树和详情表支持联动核对，再单独打开预览确认执行。
-- AI 可建议分类、分类下相对目录、理由和保留扩展名的可选新文件名；稳定文件 ID 用于关联结果，不使用模型行号。
-- 大文件夹按文件数量和序列化长度分批请求；失败批次会显示在对应预览行，部分 AI 结果不会伪装为完整成功。
-- 预览包含原路径、目标路径、原名、新名、分类、理由、建议来源和本地校验状态。可双击修改分类或新文件名，取消“执行”勾选以排除单个文件；修改后重新校验，目录树和主页面摘要同步更新。
-- 目标冲突、已排除和未确认的 AI 失败行会逐项跳过，其余安全行可继续执行。历史记录分别显示成功、跳过、失败及原因；撤销只恢复实际成功移动的文件。
-- AI 不能选择绝对路径、执行代码、Shell 命令或直接操作文件。核心计划器检查路径、文件名、重名、目标冲突和符号链接；执行器不覆盖文件，记录历史并支持撤销。
-- 扫描、连接测试、AI 请求和文件操作在后台线程中进行。
-- Orbit 是独立通用对话页面，支持本地会话、新建/切换/删除、Markdown 回答、快捷任务、停止与重试；聊天中显示 Orbit 头像和本机用户头像，用户消息采用浅蓝色气泡，统一 QSS 位于 `filemind/ui/styles/orbit.qss`。附件需用户明确选择并在发送前确认。
-- 侧栏可通过顶部按钮或 `Ctrl+B` 收起/展开，可拖动分隔线调整至 230–380px，宽度和收起状态会保存在本机。
-- Orbit 最近对话独立滚动，显示标题、活动时间与消息数，可按标题搜索；保留最近 200 段，不按天清除。删除菜单复用模型选择器的圆角弹层，删除前仍需确认。
-- 独立格式转换页包含 QSS 彩色能力卡片、加粗标题与逗号分隔的格式列表：图片、文本/电子书、PDF、Office 文字导出、音视频、字体容器及单文件 ZIP。编码器在后台检测，目标下拉框以实际输入文件为准；× 只清除选择，不删除文件。
-- Orbit 附件第一版支持 PNG/JPEG/GIF/WebP 图片（仅 DeepSeek V4.1 Flash 已核验图像输入）及 UTF-8 文本/代码文件；单个附件上限 4 MB，每次最多 5 个、总量 12 MB。PDF、Office 文档和多模态模型自动探测尚未实现。
+1. 打开 **[GitHub Releases](https://github.com/Frank2918/FileMind/releases)**。
+2. 展开版本下的 **Assets**，下载名称包含 `FileMind-Setup` 的 `.exe` 安装程序。
+3. 运行安装程序，阅读许可说明，选择安装位置及快捷方式选项。
+4. 安装完成后启动 FileMind，或从开始菜单、已创建的桌面快捷方式启动。
 
-## 按内容分类与命名
-
-按修改年月日、本地文件类型分类都不会理解文件内容或自动改名。想为哈希图片名、编号文档生成描述性名称时：
-
-1. 选择目录并读取文件列表，移走不想发送的文件。
-2. 选择“按内容分类与命名 · AI”，检查规则，并保持“应用 AI 改名”勾选。
-3. 点击“识别内容并生成建议”，确认本次数据发送范围。内容识别默认关闭，每次请求都重新确认。
-4. 查看目标目录树、建议新名称和理由；可逐条编辑或取消执行，再预览并明确确认整理。
-
-本版支持 UTF-8 / 带 BOM 的 UTF-16 文本与代码、PDF 文本层、DOCX/XLSX/PPTX 文本，以及单帧图片。文档最多发送开头 1800 字（PDF 只看前三页），图片去掉 EXIF 后等比压缩到最长 1024 像素。每次最多 128 个文件，单文件 8 MB，图片请求数据合计最多 12 MB。图片协议目前仅依据官方文档启用 DeepSeek `deepseek-flash`，不把其他模型默认视为支持视觉；不是对真实 API 调用成功的保证。
-
-疑似 `.env`、密钥、密码、私钥等凭据文件在读取前排除，正文中的部分常见凭据模式会遮蔽；这不能保证消除文档或图片中的所有个人信息。超限、损坏、不支持和失败文件会明确标记，执行时跳过，不静默回退成 AI 成功。片段只在当前任务内存中使用，不存入操作历史。Orbit 会话、附件确认和提示词仍独立。
-
-## 安装与启动
-
-使用 Python 3.13；当前界面与本机锁屏在 Windows 下验证。安装界面、AI 与本地转换依赖：
-
-```powershell
-py -3.13 -m pip install -r requirements.txt
-py -3.13 main.py
-```
-
-也可执行 `py -3.13 -m pip install -e .` 安装后使用 `filemind` 启动；该入口同样先经过本机锁屏。版本号取自 `filemind.__version__`，依赖仍以 `requirements.txt` 为唯一清单，安装包包含 QSS、SVG 与品牌图片。
-
-Windows 的配置和数据目录保持 `%APPDATA%/FileMind` 与 `%LOCALAPPDATA%/FileMind`；macOS 使用 `~/Library/Application Support/FileMind`，Linux 遵循 `XDG_CONFIG_HOME` / `XDG_DATA_HOME`。非 Windows 系统不提供 Windows 凭据管理器和 DPAPI 记住解锁；需要自行配置环境变量或明确选择本机密钥文件。原有 macOS 旧路径不自动迁移。
-
-## 本机密码与锁屏
-
-首次从 `main.py` 启动时设置本机密码（至少 8 个字符），并保存一次性显示的恢复码。下次启动使用密码解锁后才会加载工作区。左下角本机用户菜单、设置页的“本机工作空间”可手动锁定或修改密码；快捷键是 `Ctrl+L`。运行中的文件/API 任务需先完成或停止，再锁定。
-
-密码不以明文保存：应用使用 16 字节随机盐、600,000 次 PBKDF2-HMAC-SHA256 和常量时间比较。验证值位于 `%LOCALAPPDATA%/FileMind/lock/auth.json`，写入前限制文件为当前用户访问，采用原子替换。连续五次失败会等待 30 秒。
-
-“记住解锁 7 天”保存 Windows DPAPI 保护的随机令牌，不保存密码，也不使用 API Key 的凭据存储；令牌到期、手动锁定和修改密码都会使其失效。忘记密码可在解锁页输入恢复码重设，新恢复码会替代旧码；文件、聊天和模型设置保留。密码和恢复码都遗失时，没有应用内绕过入口，请勿删除其他配置或数据。锁屏是应用级访问提示，不等同于 Windows 账户安全、文件加密或防止本机管理员修改程序。
-
-左下角用户菜单可“修改用户名”、更换本机头像或“锁定 / 登出”。用户名支持 1–32 个字符，保存后同步到侧栏与聊天中的用户名称，重启后保留；长名称在侧栏省略显示，悬停可查看完整名称。名称仅在本机显示，不加入模型请求，也不改写已有聊天记录。头像仅接受用户主动选择的 PNG/JPEG/WebP/BMP，最大 8 MB、1600 万像素，保存为去除原始元数据的 128×128 PNG，不上传、不写入聊天历史。用户名、头像和侧栏偏好位于 `%LOCALAPPDATA%/FileMind/` 的 `avatar.png`、`workspace.json`，不涉及模型密钥配置。
-
-## 本地格式转换
-
-在侧栏打开“格式转换”，选择或拖入一个文件，等待识别后选择目标，点击“开始转换并保存…”，指定一个尚不存在的输出文件。源文件保留，已有输出不会覆盖；可以取消尚未发布的任务。编码期间取消会在安全停止点生效，结果发布完成后会如实显示成功。
-
-| 输入 | 真实实现 | 限制 |
-| --- | --- | --- |
-| PNG, JPEG, WebP, TIFF, BMP, GIF, AVIF, ICO, TGA, PCX, PPM 等单帧图片 | 本机 Pillow 已安装的 PNG, JPEG, WebP, TIFF, BMP, GIF, AVIF, ICO, TGA, PCX, PPM, 单页 PDF | ICO 等比留白；拒绝动图、多页输入；有损编码和 GIF 调色板影响画质；无 RAW/HEIC |
-| TXT/Markdown/代码/日志/HTML/XML/YAML 等 | UTF-8/UTF-16、静态 HTML、DOCX；HTML 提取纯文本、XML 格式化 | 输入限 UTF-8 或带 BOM 的 UTF-16；不执行脚本、不加载外部资源；文本到 DOCX 不复刻复杂排版 |
-| CSV / JSON / YAML | CSV ↔ JSON、CSV → XLSX、JSON ↔ YAML | XLSX 写入按字符串；拒绝重复表头、嵌套 CSV、YAML 别名及 JSON 不可表达的值 |
-| 文本 / EPUB | 文本创建含目录的 EPUB 3；EPUB 按阅读顺序提取章节文字 | 不处理 DRM、不读取外链；创建时按文本段落排版，不复刻原版面 |
-| PDF | 文本层 TXT, DOCX, 静态 HTML；全部页面 PNG/JPEG ZIP | 最多 100 页；DOCX/HTML 仅重建文本，不保留原排版、表格结构和图片；无 OCR |
-| DOCX / PPTX | 段落、表格或幻灯片文字导出 TXT/静态 HTML | 不保留版面、图片和动画，PPTX 不导出讲者备注 |
-| XLSX | 全部工作表值导出 JSON 或多 CSV ZIP | 公式仅使用文件缓存值，不执行公式；每表 5 万行/200 列、全工作簿 50 万单元格 |
-| 音视频 | 本机编码器可用的 MP3, WAV, FLAC, OGG, AAC, M4A, OPUS, WMA；MP4, WebM, MKV, MOV，或提取首条音轨 | 固定本地编码参数；不保证字幕、封面、多轨和原始元数据保留；重新编码可能有损 |
-| TTF, OTF, WOFF, WOFF2 字体 | TTF/OTF → WOFF/WOFF2；WOFF/WOFF2 → 原始字形类型的 TTF 或 OTF | fontTools + Brotli；不做 TTF/CFF 轮廓互转，不修改字体授权；单文件 16 MB，展开后 64 MB |
-| DOC/DOCX、XLS/XLSX、PPT/PPTX、ODT/ODS/ODP、RTF | 检测到 LibreOffice 后才提供实验性排版转换 | 当前验收环境未安装 LibreOffice，未实测此适配器；WPS/ET/DPS 专有格式不宣称支持 |
-| 任意普通文件 | 单文件 ZIP 打包 | 不递归文件夹、不解压，源文件保持不变 |
-
-单个输入最大 64 MB，文本转换最大 8 MB，图片最大 3200 万像素，PDF 单页渲染最多 2000 万像素。压缩文档不展开到磁盘，限制条目数量与展开量。转换先写入临时文件，重新检查源文件状态、取消和输出冲突后，再以不覆盖方式发布。FFmpeg 子进程可取消，最长执行 5 分钟；编码期间显示不确定进度，完成后显示结果，未伪造百分比。整个转换流程不调用 AI、不联网。
-
-## 树状整理预览
-
-独立预览展示目标根目录、蓝色文件夹、嵌套子目录和目标文件；图标、箭头与数量来自当前本地校验的计划，不会额外遍历文件夹。支持展开/折叠、名称/目标路径/理由搜索，以及选中目录或文件联动详情。目录按路径层级筛选，文件按精确路径筛选。完整名称与路径可以在提示和下方详情中查看、选取复制。
-
-树中“待执行”表示尚未操作，表格“通过”表示本地校验通过。异常、重名冲突和已排除项会在节点及摘要中显示；空计划或全部行均不可执行时禁用执行。计划内重名会追加 `(2)`、`(3)`；已存在的磁盘目标不会覆盖，而是逐项跳过。之后仍需经过主窗口二次确认，执行器会再次校验。
-
-## AI 服务配置
-
-可直接点击左侧“设置”或按 Ctrl+, 编辑并保存配置，无需修改入口代码。保存后会明确显示“尚未验证连接”，用户已保存的服务商在重启后优先恢复。普通启动入口不会进入临时验收限制。
-
-首次使用时默认选择 DeepSeek，Base URL 为 `https://api.deepseek.com`，模型 ID 为 `deepseek-flash`（官方显示名 DeepSeek-V4.1-Flash）。API Key 不预置；请在“设置”中填写自己的密钥。首次配置不会覆盖用户已保存的 provider profile。也可以选择 OpenAI、硅基流动、阿里云百炼或自定义兼容接口。可以修改 Base URL、模型名称、请求超时和 API Key。预设只提供建议值；模型是否对账户开放取决于服务商、区域和账户权限。兼容性以 Chat Completions 为目标，不支持只提供 Responses API 或专有请求格式的服务。
-
-API Key 默认保存在 Windows Credential Manager；普通配置写入当前用户 `%APPDATA%/FileMind/settings.json`。切换服务商后需保存配置。环境变量可按 provider 设置：`DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`SILICONFLOW_API_KEY`、`DASHSCOPE_API_KEY` 或 `FILEMIND_API_KEY`。密钥读取优先级为：Windows 凭据管理器 → 用户明确选择的本地密钥文件 → provider 环境变量 → 旧版项目 `.env` 中的 `DEEPSEEK_API_KEY`（仅 DeepSeek）。设置页会显示密钥来源；`.env.example` 仅为空占位，不会自动加载。
-
-如果没有可用系统凭据存储，用户可显式勾选“本机配置文件明文保存”。该文件位于用户应用数据目录之外的 FileMind 配置目录，并尝试限制为当前用户访问；明文保存存在风险，不推荐开启。密钥不会写入普通设置、操作历史、源码或错误提示。
-
-第一次生成在线 AI 预览前会询问授权。发送字段包括文件名、扩展名、大小、修改时间和用户规则；不会发送文件正文、整个文件夹或绝对路径。请求需要联网，在线 AI 不是离线功能。每次连接测试都会真实请求所选服务商，可能产生少量 token 费用；没有真实服务配置时不要把 mock 测试结果当作连接成功。
-
-Orbit 首次发送消息前会单独询问授权。发送范围是你输入的消息与当前会话最近上下文，服务商由“设置”页当前已保存的配置决定。添加附件时，每次发送前还会列出文件名并再次确认；被选中文件的内容会发送给当前服务商。聊天记录保留附件文件名，不保留本地路径或附件正文；应用重启后如需重试含附件消息，需要重新选择附件。Orbit 不会自动访问本机文件或文件整理记录。会话保存在 `%APPDATA%/FileMind/chat_history.json`，不保存 API Key。模型切换并保存后，之后的新请求直接使用新配置，无需重启。
-
-## branch2 整合：多模型与本机 Ollama
-
-Windows EXE、Inno Setup 安装包及 GitHub Releases 的命令步骤见 [Windows 发布说明](docs/WINDOWS_RELEASE.md)。统一应用图标位于 `filemind/ui/assets/FileMind_AppIcon.ico`，Inno Setup 脚本位于 `packaging/FileMind.iss`。
-
-左侧“模型配置”集中管理服务商、API 配置和并行模型，列表使用随应用打包的服务商图标。左下角“本机用户 → 设置”（或 `Ctrl+,`）打开通用设置：外观、锁屏、密码和隐私。外观提供浅色、深色、跟随系统、绿色、橙色，立即生效并自动保存。绿色和橙色使用浅色背景。
-
-“模型配置”页新增多模型管理卡片，可添加、勾选、排序和移除模型，最多保存 20 个。并行模式默认关闭；开启并保存后，Orbit 将向 1–4 个启用模型分别发送当前问题、近期上下文与系统提示词，每次列出实际接口请求确认。回答按模型与耗时分组，一项失败不影响其他结果；全部失败仍可重试，取消后不会保存迟到回答。并行模式不发送附件，需要关闭后再单独确认附件发送。
-
-模型列表只保存非密钥字段，继续复用现有服务商凭据。不同 Base URL 不会自动继承原接口密钥；请先在上方服务商配置中保存对应地址和密钥。Orbit 下拉可以直接切换当前服务商已保存的模型，后续请求立即生效，保留原有圆角弹层。
-
-新增智谱、千帆、Kimi、豆包、火山引擎、千问、混元快捷入口；新云端入口不预填未经核验的模型名称，需要填写账户实际可用的模型 ID。Ollama 可检测本机已安装模型，不要求 API Key；示例模型不代表已经安装。仅允许回环地址，远程部署请使用自定义兼容接口。本机服务可能自行调用云端模型，请核对 Ollama 配置。
-
-AI 建议现在按行隔离格式或路径错误，有效建议可继续进入预览；异常行仍标记失败并跳过。手工与 AI 改名共用完整扩展名链校验，例如 `.tar.gz` 不能改成 `.gz`。
-
-本轮整合范围、未采用的冲突改动及定向验收结果见 [branch2 整合记录](docs/BRANCH2_INTEGRATION.md)。
-
-## 官方兼容端点参考
-
-- DeepSeek：`https://api.deepseek.com`，默认模型 ID `deepseek-flash`（当前显示名 DeepSeek-V4.1-Flash）。官方模型目录、首次调用指南和发布说明均列出该 ID；旧 `deepseek-v4-flash` 已退役并临时路由到新模型。[模型目录](https://api-docs.deepseek.com/api/list-models/)、[首次调用指南](https://api-docs.deepseek.com/guides/codex)、[V4.1-Flash 发布说明](https://api-docs.deepseek.com/news/news260910/)
-- OpenAI：`https://api.openai.com/v1`，默认模型 `gpt-5-mini`。请按账户可用模型调整。[官方模型目录](https://developers.openai.com/api/docs/models/all)
-- SiliconFlow：`https://api.siliconflow.cn/v1`，默认模型 `deepseek-ai/DeepSeek-V4-Flash`。[官方 Chat Completions 文档](https://docs.siliconflow.cn/docs/api/chat-completions-post)
-- 阿里云百炼：预设北京公共兼容端点 `https://dashscope.aliyuncs.com/compatible-mode/v1`，默认模型 `qwen-plus`。其他地域/业务空间可能要求不同 URL 和 Key。[官方 OpenAI 兼容说明](https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope)
-
-## 测试
-
-```powershell
-py -3.13 -m pip install -r requirements-dev.txt
-py -3.13 -m pytest -q
-py -3.13 -m compileall -q main.py filemind tests tools
-py -3.13 -m pip check
-```
-
-`.github/workflows/ci.yml` 配置 Windows、Ubuntu、macOS + Python 3.13 自动测试及安装包资源检查。工作流已配置不代表本次已经在远端三平台运行；本机验证结果见 [队友改动整合记录](docs/BRANCH_INTEGRATION.md)。
-
-AI 测试使用 mock，不调用真实密钥或网络。Qt 集成测试使用 `QT_QPA_PLATFORM=offscreen` 和临时目录。
-
-可以用隔离工具检查界面，不读取 `.env`、环境 API Key、Windows API 凭据或真实历史记录：
-
-```powershell
-py -3.13 tools/review_ui.py --isolated --page setup --width 920 --height 660
-py -3.13 tools/review_ui.py --isolated --page preview --width 1024 --height 700
-py -3.13 tools/review_ui.py --isolated --page orbit --width 1280 --height 850
-py -3.13 tools/review_ui.py --isolated --page conversion --width 1024 --height 700
-py -3.13 tools/review_ui.py --page chat --snapshot .artifacts/ui-review/chat.png
-```
-
-工具中的文件、路径、会话是临时生成的验收数据，不代表真实模型回答。正式使用仍从 `main.py` 启动。历史改造记录见 [界面改造说明](docs/UI_REDESIGN.md)，五阶段变更见 [工作区改造验收](docs/WORKSPACE_REDESIGN.md)。
-
-普通运行 tools/review_ui.py（没有 --isolated 或 --snapshot）现会启动正式应用，使用可持久化的设置和账户。只有显式隔离或截图模式使用临时目录，隔离模式中手动填写的密钥仅在本进程保留，退出后清理；不要把它用作日常工作区。本轮详细变更、依赖许可证和测试记录见 [第三轮整改验收](docs/ROUND3_REDESIGN.md)。
-
-后续聊天与下拉菜单优化见 [第四轮 UI 验收](docs/ROUND4_ORBIT_UI.md)。模型连接从侧栏“模型配置”进入；各页面顶部不再重复显示模型设置按钮。通用设置位于头像菜单，`Ctrl+,` 打开通用设置。补齐的主题、图标和入口见 [第七轮整合记录](docs/ROUND7_MODEL_SETTINGS_THEMES.md)。
-
-内容识别命名、格式扩展、QSS 卡片及最新测试结果见 [第五轮验收记录](docs/ROUND5_CONTENT_CONVERSION_QSS.md)。
-
-## 目录结构
+首个发布版本为 **[v0.1.0 — Windows 桌面版](https://github.com/Frank2918/FileMind/releases/tag/v0.1.0)**，其安装包为：
 
 ```text
-filemind/
-  ai/          服务接口、provider 预设、提示词、结构化校验、OpenAI SDK 适配
-  core/        扫描、分类、整理计划安全校验、执行与撤销
-  conversion/  本地格式识别、转换能力与安全输出
-  models/      文件操作与聊天数据模型（保留旧导入兼容）
-  storage/     操作历史、普通设置、Windows 凭据存储
-  ui/          PySide6 页面、模型视图、后台任务
-tests/         核心、AI、设置持久化及 UI 集成测试
-main.py        应用入口
+FileMind-Setup-0.1.0-x64.exe
 ```
 
-## 已知限制
+默认安装位置为 `%LOCALAPPDATA%\Programs\FileMind`，安装程序按当前用户安装；开机启动是可选项，默认关闭。
 
-- 只支持 OpenAI Chat Completions 兼容接口；每个模型与服务商配置仍需使用“测试连接”实测。
-- 默认 AI 整理仍只发送元数据。需要内容分类/命名时，选择“按内容分类与命名 · AI”，每次确认后才读取和发送正文片段或图片缩略图；模型判断质量不能由本地保证。
-- Windows 凭据管理器是推荐密钥存储；明文本地存储只能作为用户明确选择的降级方案。
-- 仅处理所选目录第一层，不递归扫描。撤销基于文件大小和修改时间检查，无法识别同时恢复这两项属性的内容改写。
+GitHub 自动提供的 `Source code (zip)` / `Source code (tar.gz)` 是源码归档。当前 v0.1.0 的应用附件是上述 Setup EXE；如果后续提供便携 ZIP，需要完整解压后使用，不能单独拿出 PyInstaller 目录中的 `FileMind.exe` 运行。
+
+本文介绍当前仓库源码的能力；已安装版本的具体变化请以对应 Release 说明为准。
+
+## 软件截图
+
+以下截图来自当前源码在 Windows 上运行的真实界面。文件、路径与对话均使用隔离的演示数据，不含个人配置或真实聊天；Orbit 的示例回答用于展示排版，并未调用线上 AI。
+
+### 文件整理工作区
+
+本地规则生成待确认的分类计划，可在目录树与文件清单中核对目标位置。
+
+![FileMind 文件整理工作区：按文件类型分类与目标目录树](docs/images/file-organization.png)
+
+<details>
+<summary>整理预览：逐项核对、编辑与确认执行</summary>
+
+预览显示执行勾选、分类、建议文件名和本地校验状态；此图中的文件尚未移动。
+
+![FileMind 整理预览：执行勾选、分类、校验状态与文件详情](docs/images/organization-preview.png)
+
+</details>
+
+<details>
+<summary>Orbit AI 助手：示例对话、Markdown 与最近会话</summary>
+
+使用本地示例对话展示聊天头像、Markdown 回答与会话列表，不代表真实模型调用结果。
+
+![FileMind Orbit AI 助手：示例学习计划与最近会话](docs/images/orbit-assistant.png)
+
+</details>
+
+<details>
+<summary>格式转换：PNG 转 WebP 的实际完成结果</summary>
+
+使用项目图标的副本，在本机实际完成 PNG → WebP 转换；界面同时展示当前可用格式。
+
+![FileMind 本地格式转换：PNG 转 WebP 成功与可用格式卡片](docs/images/format-conversion.png)
+
+</details>
+
+## 核心功能
+
+| 功能 | 已实现的内容 |
+| --- | --- |
+| 本地文件整理 | 读取所选目录第一层普通文件，按文件类型或修改年月日分类；本地规则不需要 API Key |
+| AI 分类与命名 | 根据文件元数据和规则生成建议；另外提供需逐次授权的内容识别与命名 |
+| 整理预览与编辑 | 目标目录树、详情联动与搜索；核对建议路径，逐条修改分类或新文件名，或排除某个文件 |
+| 确认执行与撤销 | 执行前确认；冲突项逐条跳过，记录成功、跳过和失败结果，并支持有条件的撤销 |
+| Orbit AI 助手 | Markdown 回答、新建与切换会话、标题搜索、删除确认、停止与重试，以及手动选择的受限附件 |
+| 模型配置 | OpenAI Chat Completions 兼容服务、本机 Ollama 模型检测、连接测试，以及 1–4 个模型的并行对话 |
+| 本地格式转换 | 图片、文本与结构化数据、EPUB、PDF、Office 文字导出、音视频、字体容器和单文件 ZIP |
+| 本机账户与外观 | 本机密码与恢复码、锁屏、用户名与头像、浅色 / 深色 / 跟随系统 / 绿色 / 橙色主题 |
+
+AI 返回的是待审阅的建议。文件移动由本地执行器完成，不会让模型直接执行 Shell 命令或操作磁盘。
+
+## 快速开始
+
+### 1. 首次启动
+
+首次启动需设置至少 8 个字符的本机密码，并保存一次性显示的恢复码。之后解锁即可进入工作区。
+
+左下角账户菜单可修改用户名、头像和密码，或打开通用设置。`Ctrl+L` 用于锁定，`Ctrl+B` 用于收起或展开侧栏，`Ctrl+,` 打开通用设置。锁定前需完成或停止正在运行的任务。
+
+本机密码用于应用锁屏，不是 AI 服务的账号密码，也不会用于加密你的原始文件。
+
+### 2. 用本地规则整理文件
+
+1. 打开 **文件整理**，点击 **选择目录**，核对导入文件列表；需要时点击 **读取文件** 刷新。
+2. 选择 **按文件类型 · 本地** 或 **按修改年月日 · 本地**。
+3. 点击 **生成规则预览**，检查目标目录树、文件名和目标路径。
+4. 点击 **查看预览并确认**，按需逐条编辑或排除文件。
+5. 确认执行后，应用移动通过本地校验的文件；已有目标文件不会被覆盖。
+6. 在 **整理历史** 查看结果。需要撤销时，重新选择原目录并核对对应记录。
+
+整理后的文件如果发生变化，或原位置已经存在同名文件，撤销会拒绝覆盖并报告原因。历史记录不能替代独立备份。
+
+### 3. 配置 AI 服务
+
+打开左侧 **模型配置**，按服务商实际提供的信息填写：
+
+| 界面字段 | 填写内容 |
+| --- | --- |
+| 服务商 | 选择对应预设，或使用自定义 OpenAI 兼容接口 |
+| Base URL | 服务商提供的 Chat Completions 兼容 API 基础地址；不要填写聊天网站首页 |
+| 模型名称 | 账户实际可用的模型 ID，不一定等于模型的宣传名称 |
+| API Key | 你自己的 API 密钥；云端服务通常需要密钥及相应调用权限 |
+| 请求超时 | 按网络和模型响应时间调整 |
+
+点击 **保存配置** 后再 **测试连接**。测试会真实访问所选接口，可能产生服务商调用费用；保存成功不代表连接已验证。
+
+服务商预设包含 DeepSeek、OpenAI、硅基流动、阿里云百炼、智谱、千帆、Kimi、豆包、火山引擎、千问、混元等。它们共用兼容接口适配，并不代表所有模型、区域及服务商专有 API 都已经验证。
+
+- **云端 AI**：用于 AI 分类、内容识别和 Orbit 对话，需要可用的网络、接口和账户权限。
+- **本机 Ollama**：需要先安装并启动 Ollama、准备模型，再点击 **检测本机模型**。此入口仅允许回环地址，不要求 API Key；是否调用云端仍取决于 Ollama 自身配置。
+- **多模型对话**：在配置页添加、勾选并保存模型，启用并行模式后，可在 Orbit 中同时请求 1–4 个模型。发送前会确认实际接口范围；并行模式暂不发送附件。
+
+### 4. 使用 AI 分类或 Orbit
+
+**AI 整理**：在文件整理页选择带 `AI` 的规则，输入要求并生成建议。若希望根据正文或图片为编号、哈希文件名生成新名称，选择 **按内容分类与命名 · AI**，检查“应用 AI 改名”选项，并确认本次内容发送范围。
+
+内容识别会读取受限的文档片段或图片缩略图，不代表理解整份文件。结果仍需预览、校验和确认后才会执行。
+
+**Orbit 对话**：进入 **Orbit AI 助手**，输入消息，`Enter` 发送，`Shift+Enter` 换行。会话保存在本机，最近列表最多保留 200 段；可按标题搜索、切换或删除。
+
+附件必须主动选择并在发送前确认。目前支持受限的 UTF-8 文本 / 代码和部分图片；每次最多 5 个，单个不超过 4 MB，总计不超过 12 MB。图片输入受模型适配限制，PDF 和 Office 文件不能直接作为 Orbit 附件发送。
+
+### 5. 转换文件格式
+
+进入 **格式转换**，选择或拖入一个普通文件，等待识别后选择目标，点击 **开始转换并保存…** 并指定新的输出位置。
+
+可用目标按实际输入和本机后端显示。源文件保留，已有输出不覆盖；选择区的 `×` 只清除当前选择，不删除文件。
+
+## 格式转换范围
+
+| 类别 | 已实现的转换示例 | 主要边界 |
+| --- | --- | --- |
+| 图片 | PNG, JPEG, WebP, TIFF, BMP, GIF, AVIF 等格式重新编码，图片生成单页 PDF | 以已安装编码器为准；只处理单帧输入，不支持 RAW / HEIC |
+| 文本与结构化数据 | UTF-8 / UTF-16, TXT, HTML, DOCX, CSV ↔ JSON, JSON ↔ YAML, CSV → XLSX | 输入编码受限；JSON 转 CSV 需要扁平对象数组，不复刻复杂排版 |
+| EPUB | 从文本创建 EPUB，或按阅读顺序提取 EPUB 章节文字 | 不处理 DRM，不读取外链 |
+| PDF | 文本层提取为 TXT, DOCX, HTML；页面渲染为 PNG / JPEG ZIP | 最多 100 页；无 OCR，文本重建不保留原版面、图片与表格结构 |
+| Office 内容 | DOCX / PPTX → TXT, HTML；XLSX → JSON, 多 CSV ZIP | 提取文字或已有单元格值，不计算公式，不保证原样式 |
+| 音视频 | MP3, WAV, FLAC, OGG 等音频重编码；MP4, WebM, MKV 等视频重编码及音轨提取 | 依赖可用 FFmpeg 编码器；不保留全部字幕、多轨和元数据 |
+| 字体容器 | TTF / OTF → WOFF / WOFF2，WOFF / WOFF2 → 原始字形类型的 TTF / OTF | 不做 TTF 与 CFF 轮廓互转；需遵守字体自身许可 |
+| 普通文件 | 将一个文件另存为 ZIP | 不递归压缩目录，不提供解压功能 |
+
+单个输入一般不超过 64 MB，文本转换不超过 8 MB，字体另有更严格限制。转换在本机进行，不调用 AI。
+
+检测到 LibreOffice 后，界面还会提供 **实验性 Office 排版转换**。LibreOffice 不随应用安装；该能力需要另行安装并核对字体、版式和公式结果，不能视为已保证的原样转换。
+
+## 从源码运行
+
+以下命令用于 **Windows PowerShell**，以项目根目录的 `main.py` 为启动入口。
+
+- 项目元数据要求 **Python >= 3.13**；当前 CI 和 Windows 打包使用 Python 3.13 x64。
+- 运行依赖以 [requirements.txt](requirements.txt) 为准；[pyproject.toml](pyproject.toml) 从同一文件读取依赖。
+- 直接使用虚拟环境里的解释器，无需激活环境或调整 PowerShell 执行策略。
+
+```powershell
+git clone https://github.com/Frank2918/FileMind.git
+Set-Location FileMind
+
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
+```
+
+已克隆项目时，在自己的项目目录中执行创建虚拟环境及后续命令，不要重复覆盖现有工作区。
+
+主要技术组成：
+
+| 部分 | 技术 |
+| --- | --- |
+| 桌面界面 | PySide6-Essentials 6.12.0, Qt Widgets, QSS |
+| AI 接口 | OpenAI Python SDK，Chat Completions 兼容协议 |
+| 本地转换 | Pillow, PDFium, python-docx, openpyxl, python-pptx, PyYAML, defusedxml, FFmpeg, fontTools, Brotli |
+| 构建与安装 | PyInstaller onedir, Inno Setup |
+| 测试 | pytest, Qt Test |
+
+### 构建 Windows 安装程序
+
+需要 Inno Setup 6.5 或更新版本。在仓库根目录执行：
+
+```powershell
+.\scripts\build-windows.ps1 -Stage Prepare
+.\scripts\build-windows.ps1 -Stage Bundle
+.\scripts\build-windows.ps1 -Stage Installer
+```
+
+`Prepare` 创建独立的 `.venv-build`，按发布锁文件安装依赖；`Bundle` 生成完整 onedir；`Installer` 编译安装程序并整理发布材料。也可在 Inno Setup Compiler 中打开 `packaging\FileMind.iss` 手动编译。
+
+编译器路径、安装向导、自检和发布材料说明见 **[正式 Windows 发布流程](docs/RELEASE_PIPELINE.md)**。构建产物不应提交进源码仓库。
+
+## 项目结构
+
+```text
+FileMind/
+├── main.py                  # 桌面启动入口，也支持显式离线自检
+├── filemind/
+│   ├── ai/                  # 模型适配、提示词、内容读取与附件处理
+│   ├── core/                # 扫描、分类、计划校验、编辑、执行与撤销
+│   ├── conversion/          # 本地格式识别和转换后端
+│   ├── models/              # 文件与整理计划等数据模型
+│   ├── storage/             # 设置、凭据、历史、锁屏与工作区偏好
+│   └── ui/                  # Qt 窗口、页面、对话框、组件、图标与 QSS
+├── tests/                   # 核心逻辑、UI、协议与发布配置测试
+├── tools/                   # 图标导出、界面审查与发布辅助工具
+├── scripts/                 # Windows 发布入口脚本
+├── packaging/               # PyInstaller / Inno Setup 配置及依赖锁文件
+├── docs/                    # 发布流程与设计、整合记录
+├── .github/workflows/       # CI 与 Windows 发布工作流
+├── requirements.txt         # 应用运行依赖
+├── requirements-dev.txt     # 开发与测试依赖
+├── pyproject.toml           # 包元数据、Python 要求与测试配置
+└── LICENSE                  # 项目 MIT 许可证
+```
+
+## 安全与隐私
+
+### 文件处理与外部请求
+
+| 操作 | 本地处理与发送范围 |
+| --- | --- |
+| 文件扫描、本地规则整理 | 扫描所选目录第一层文件；扫描和分类不读取正文，也不向模型发请求 |
+| 基于文件名的 AI 整理 | 经确认后发送文件标识、文件名、扩展名、大小、修改时间及整理规则；不发送正文和本地绝对路径 |
+| 按内容分类与命名 | 每次另行确认后，再发送受限文档片段或图片缩略图，以及相应元数据；文档最多取开头 1800 字，PDF 最多读取前三页 |
+| Orbit 对话 | 向所选接口发送消息、系统提示词和当前会话最近最多 20 条上下文；多模型模式会分别发送给各选中接口 |
+| Orbit 附件 | 发送前单独确认；所选文本或图片内容会发送给当前模型服务 |
+| 格式转换 | 本地转换流程不调用 AI，也不发起网络请求 |
+
+内容识别会排除部分疑似凭据文件并遮蔽部分常见凭据模式，但不能保证识别所有敏感信息。图片中的个人信息仍可能可见，请在授权前检查所选文件。云端服务如何保留和处理请求，以该服务的条款与隐私政策为准。
+
+本地计划器检查文件名、相对路径和目标冲突，执行器不覆盖已有文件。整理会实际移动或重命名文件；重要资料请先备份。
+
+### 本地数据与密钥
+
+Windows 默认数据位置如下：
+
+| 位置 | 内容 |
+| --- | --- |
+| `%APPDATA%\FileMind\settings.json` | 模型与界面设置等普通配置 |
+| `%APPDATA%\FileMind\chat_history.json` | Orbit 消息、时间戳与附件名称；不保存附件正文或本地附件路径 |
+| `%LOCALAPPDATA%\FileMind\` | 用户名、头像、布局偏好及锁屏相关数据 |
+| 所选目录下的 `.filemind\history\` | 整理操作记录，包含文件本地路径及执行、撤销状态 |
+
+API Key 默认保存在 **Windows 凭据管理器**，也支持服务商环境变量。显式启用“在本机配置文件中明文保存密钥”时，会写入用户配置目录中的 `local_api_keys.json`，存在明文风险。
+
+聊天和整理历史是本地 JSON 数据，并未提供整体加密。本机密码保存验证值，记住解锁令牌在 Windows 下使用 DPAPI 保护；应用锁屏不等于磁盘加密。不要把 `.env`、用户数据、密钥文件或真实聊天记录提交到 Git，也不要随安装包分发。
+
+## 当前限制与路线图
+
+当前版本的边界：
+
+- 扫描仅覆盖所选目录第一层，不递归遍历或监控整个磁盘。
+- 未提供网页采集、扫描版 PDF OCR 或通用图片文字识别功能。
+- Office 内置转换以文字和单元格值导出为主；LibreOffice 排版转换为可选实验能力。
+- 云端模型能力和账户授权由服务商决定；没有通用多模态能力自动探测，不支持只提供 Responses API 或其他专有协议的接口。
+- Orbit 不能直接接收 PDF / Office 附件；图片输入受当前模型适配限制。
+
+后续拟完善的方向，具体范围以 Issue 和后续版本说明为准：
+
+- 补充更多操作示例与简短使用演示。
+- 扩大转换格式和复杂文档的兼容性验证。
+- 完善安装、升级、不同 DPI 与代码签名的发布验证。
+- 改进更多模型接口的兼容性与错误提示。
+
+## 常见问题
+
+### 下载后应该运行哪个文件？
+
+普通用户下载 Release 的 `FileMind-Setup-*.exe`。源码 ZIP 不包含可直接安装的程序；PyInstaller 输出目录中的 EXE 也依赖配套文件。
+
+### 源码运行提示找不到模块或 Qt 依赖怎么办？
+
+检查是否使用 Python 3.13 及以上，并使用同一个虚拟环境安装依赖和启动程序：
+
+```powershell
+.\.venv\Scripts\python.exe --version
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe main.py
+```
+
+若安装版无法启动，请记录 Windows 版本、下载的安装包名称和错误截图后提交 Issue；不要提供密钥或真实聊天数据。
+
+### AI 配置保存了，为什么仍然连接失败？
+
+先确认 **模型配置** 页面已保存正确的服务商、Base URL、模型 ID 与 API Key，再测试连接。代码会区分密钥或权限问题、地址 / 模型不存在、限流或额度不足、超时及服务端错误。请按实际提示检查服务商控制台、账户额度和网络；配置预设不代表账户已有模型权限。
+
+### 为什么选了文件却没有预期的转换格式？
+
+目标由输入格式、本机编码器和后端决定。扫描 PDF 没有文本层时无法直接提取文字；Office 内置文字导出不等同于保留版面的文档转换。LibreOffice 相关目标只在检测到该程序后出现。
+
+### 为什么有的文件被跳过，或不能撤销？
+
+在预览与历史中查看逐项原因。常见情况包括目标已存在、用户排除、路径校验失败、AI 建议不完整，以及文件在整理后发生变化。解决冲突后重新生成计划；不要通过覆盖原文件来绕过检查。
+
+### 忘记本机密码怎么办？
+
+在解锁页使用首次设置时保存的恢复码重设密码。应用没有密码与恢复码均遗失时的内置绕过入口，请勿为解锁而随意删除用户数据。
+
+## 开发与贡献
+
+欢迎通过 [Issues](https://github.com/Frank2918/FileMind/issues) 报告问题或提出建议，也欢迎提交 Pull Request。
+
+1. 先描述使用场景、预期行为和复现步骤，较大改动建议先在 Issue 中讨论。
+2. 使用独立分支，保持改动范围集中，为行为变更补充相关测试。
+3. 提交前核对差异，排除真实密钥、个人文件、聊天记录和构建产物。
+
+在已建立的开发虚拟环境中，可手动运行：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+CI 配置覆盖 Windows、Ubuntu、macOS 的 Python 3.13 测试与包资源检查；当前发布的桌面安装程序面向 Windows。测试使用临时数据、模拟服务与本机协议夹具，不需要真实 API Key。
+
+## 许可证
+
+项目自有代码按 **[MIT License](LICENSE)** 发布。贡献和再分发时请保留许可证要求的版权及许可声明。
+
+Qt / PySide6、FFmpeg、PDFium 等第三方组件遵循各自许可证，项目的 MIT 许可不替代它们的授权条件。安装包维护者还需根据实际捆绑二进制履行相应的许可和源码提供义务，详见 [第三方许可证说明](packaging/licenses/README.md)。
+
+## English
+
+**FileMind is a Windows desktop application for reviewing and organizing local files, with an optional AI assistant and local format conversion.**
+
+[Screenshots](#软件截图) show the real Windows application with isolated demo files and sample conversations. The sample chat is illustrative, with no live AI request; the PNG-to-WebP conversion was actually performed locally.
+
+### Features
+
+- Organize top-level files by type or modification date using local rules.
+- Request AI classification and naming suggestions, with separate consent for bounded content analysis.
+- Review and edit a plan before confirming file moves; inspect history and undo eligible operations without overwriting existing files.
+- Chat with Orbit, manage local conversations, and optionally query 1–4 configured models in parallel.
+- Convert supported images, text, structured data, EPUB, PDF, Office content, media and font containers locally. LibreOffice layout conversion is optional and experimental.
+- Configure a local password, username, avatar and appearance.
+
+### Install or run from source
+
+Download the Windows installer from **[GitHub Releases](https://github.com/Frank2918/FileMind/releases)**. The first published Windows release is **[v0.1.0](https://github.com/Frank2918/FileMind/releases/tag/v0.1.0)**; choose `FileMind-Setup-0.1.0-x64.exe`, run the installer and launch FileMind. Python is not required for the installer version.
+
+For source development, use Python 3.13 or later and follow the [PowerShell setup commands above](#从源码运行). Runtime dependencies are defined in `requirements.txt`; the desktop entry point is `main.py`.
+
+Cloud AI features require a configured endpoint, model and API Key. Local Ollama requires a running service and an installed model, but no API Key. Review the [privacy section](#安全与隐私): AI requests can send metadata, conversation text and explicitly approved file content to the selected endpoints. Local chat history is not encrypted by the application. Scanned-PDF OCR and web collection are not implemented.
+
+Licensed under [MIT](LICENSE) for project code; bundled third-party components retain their own license terms.
